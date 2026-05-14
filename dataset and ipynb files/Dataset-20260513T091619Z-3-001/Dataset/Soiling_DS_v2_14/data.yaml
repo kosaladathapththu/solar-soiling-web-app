@@ -1,0 +1,13 @@
+train: E:\DL-Projects\Soiling-YOLO\Soiling_DS_v2_14\train/images
+val: E:\DL-Projects\Soiling-YOLO\Soiling_DS_v2_14\valid/images
+test: E:\DL-Projects\Soiling-YOLO\Soiling_DS_v2_14\test/images
+
+nc: 2
+names: ['Dust', 'bird-droppings']
+
+roboflow:
+  workspace: pvsoiling
+  project: soiling_dropping-2
+  version: 14
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pvsoiling/soiling_dropping-2/dataset/14

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDS-YOLO · Solar Panel Soiling Detection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Top system bar -->
+  <header class="sysbar">
+    <div class="sysbar-left">
+      <div class="sysbar-logo">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="9" width="30" height="19" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M1 15h30" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M8 9V6M16 9V4M24 9V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M6 12h20M6 18h14M6 22h9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="sysbar-brand">
+        <span class="sysbar-name">SDS-YOLO</span>
+        <span class="sysbar-divider">/</span>
+        <span class="sysbar-desc">Solar Panel Soiling Detection System</span>
+      </div>
+    </div>
+    <div class="sysbar-right">
+      <div class="sysbar-tag">v2.0</div>
+      <div class="sys-status" id="sysStatus">
+        <span class="sys-status-dot" id="statusDot"></span>
+        <span class="sys-status-label" id="statusLabel">READY</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main workspace -->
+  <div class="workspace">
+
+    <!-- Sidebar: Input -->
+    <aside class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="section-label">
+          <span class="section-num">01</span>
+          <span>Image Input</span>
+        </div>
+
+        <div class="dropzone" id="uploadZone">
+          <input type="file" id="imageInput" accept="image/*" />
+
+          <div class="dropzone-idle" id="uploadContent">
+            <svg class="dz-icon" viewBox="0 0 56 56" fill="none">
+              <rect x="4" y="16" width="48" height="32" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 26h48" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M18 16V11M28 16V8M38 16V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M28 34v10M23 39l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="dz-main">Drop panel image here</p>
+            <p class="dz-sub">JPG · PNG · WEBP · up to 20 MB</p>
+          </div>
+
+          <div class="dropzone-preview hidden" id="uploadPreview">
+            <img id="previewImage" alt="Selected panel image" />
+            <div class="dz-overlay">
+              <span class="dz-fname" id="previewFilename"></span>
+              <button class="dz-change-btn" onclick="document.getElementById('imageInput').click()">Replace</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="file-info hidden" id="fileMeta">
+        <div class="fi-row">
+          <span class="fi-key">Filename</span>
+          <span class="fi-val" id="metaName">—</span>
+        </div>
+        <div class="fi-row">
+          <span class="fi-key">Size</span>
+          <span class="fi-val" id="metaSize">—</span>
+        </div>
+        <div class="fi-row">
+          <span class="fi-key">Format</span>
+          <span class="fi-val" id="metaType">—</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section sidebar-section--action">
+        <button class="run-btn" id="runBtn" onclick="predictImage()" disabled>
+          <span class="run-btn-inner" id="btnInner">
+            <svg viewBox="0 0 16 16" fill="none">
+              <path d="M3 2l11 6-11 6V2z" fill="currentColor"/>
+            </svg>
+            Run Detection
+          </span>
+          <span class="run-btn-loading hidden" id="btnLoading">
+            <span class="spinner"></span>
+            Analysing image…
+          </span>
+        </button>
+      </div>
+
+      <div class="sidebar-section sidebar-note">
+        <div class="note-row">
+          <span class="note-dot dust"></span>
+          <span>Dust / Particle soiling</span>
+        </div>
+        <div class="note-row">
+          <span class="note-dot bird"></span>
+          <span>Bird drop contamination</span>
+        </div>
+        <div class="note-row">
+          <span class="note-dot other"></span>
+          <span>Other / Mixed soiling</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main content: Results -->
+    <main class="content">
+
+      <div class="content-header">
+        <div class="content-title-group">
+          <span class="section-num">02</span>
+          <span class="content-title">Detection Output</span>
+        </div>
+        <div class="content-meta" id="contentMeta">—</div>
+      </div>
+
+      <!-- Idle -->
+      <div class="state-idle" id="resultsIdle">
+        <div class="idle-panel-grid">
+          <div class="idle-panel"><div class="idle-panel-inner"></div></div>
+          <div class="idle-panel"><div class="idle-panel-inner"></div></div>
+          <div class="idle-panel"><div class="idle-panel-inner"></div></div>
+          <div class="idle-panel"><div class="idle-panel-inner"></div></div>
+          <div class="idle-panel"><div class="idle-panel-inner active"></div></div>
+          <div class="idle-panel"><div class="idle-panel-inner"></div></div>
+        </div>
+        <div class="idle-message">
+          <p class="idle-title">No image loaded</p>
+          <p class="idle-sub">Upload a solar panel image to begin soiling analysis</p>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="state-results hidden" id="resultsContent">
+
+        <div class="metrics-bar">
+          <div class="metric">
+            <span class="metric-label">Panel Status</span>
+            <span class="metric-value" id="summaryStatus">—</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric">
+            <span class="metric-label">Detections</span>
+            <span class="metric-value mono" id="summaryCount">—</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric">
+            <span class="metric-label">Model</span>
+            <span class="metric-value mono">SDS-YOLO</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric">
+            <span class="metric-label">Confidence</span>
+            <span class="metric-value mono" id="summaryConf">—</span>
+          </div>
+        </div>
+
+        <div class="result-layout">
+          <div class="result-image-pane">
+            <div class="result-image-header">
+              <span>Model Output</span>
+              <span class="mono" id="imgDims"></span>
+            </div>
+            <div class="result-image-box">
+              <img id="resultImage" alt="Detection output" />
+            </div>
+          </div>
+
+          <div class="result-log-pane">
+            <div class="log-header">
+              <span>Detection Log</span>
+              <span class="mono" id="detCountBadge">0 objects</span>
+            </div>
+            <div class="log-list" id="detectionsList"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Error -->
+      <div class="state-error hidden" id="resultsError">
+        <div class="error-block">
+          <div class="error-code">ERR</div>
+          <p class="error-title" id="errorTitle">Detection Failed</p>
+          <p class="error-body" id="errorBody"></p>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="footer-sys">SDS-YOLO Detection System</span>
+      <span class="footer-sep">·</span>
+      <span>Solar Panel Soiling Analysis</span>
+    </div>
+    <div class="footer-right">
+      <span id="footerTime"></span>
+    </div>
+  </footer>
+
+  <script src="script.js?v=20"></script>
+  <script>
+    // Live clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('footerTime').textContent =
+        now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
